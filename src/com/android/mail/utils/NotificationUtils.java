@@ -95,7 +95,7 @@ public class NotificationUtils {
     public static final String EXTRA_GET_ATTENTION = "get-attention";
 
     /** Contains a list of <(account, label), unread conversations> */
-    private static NotificationMap sActiveNotificationMap = null;
+    private static volatile NotificationMap sActiveNotificationMap = null;
 
     private static final SparseArray<Bitmap> sNotificationIcons = new SparseArray<Bitmap>();
     private static WeakReference<Bitmap> sDefaultWearableBg = new WeakReference<Bitmap>(null);
@@ -131,12 +131,16 @@ public class NotificationUtils {
     /**
      * Returns the notification map, creating it if necessary.
      */
-    private static synchronized NotificationMap getNotificationMap(Context context) {
+    private static NotificationMap getNotificationMap(Context context) {
         if (sActiveNotificationMap == null) {
-            sActiveNotificationMap = new NotificationMap();
-
-            // populate the map from the cached data
-            sActiveNotificationMap.loadNotificationMap(context);
+            synchronized (NotificationUtils.class) {
+                if (sActiveNotificationMap == null) {
+                    sActiveNotificationMap = new NotificationMap();
+                    
+                    // populate the map from the cached data
+                    sActiveNotificationMap.loadNotificationMap(context);
+                }
+            }
         }
         return sActiveNotificationMap;
     }
